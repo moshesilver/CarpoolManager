@@ -1,0 +1,193 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite" // or your preferred provider
+  url      = env("DATABASE_URL")
+}
+
+// =============================
+// Core Models: Address & Person
+// =============================
+
+model Address {
+  id     Int    @id @default(autoincrement())
+  street String
+  city   String
+  state  String
+  zip    String
+
+  // Inverse relation – people with this address
+  people Person[]
+}
+
+model Person {
+  id        Int     @id @default(autoincrement())
+  name      String
+  addressId Int
+  address   Address @relation(fields: [addressId], references: [id])
+
+  // One-to-one optional extensions
+  parent Parent?
+  child  Child?
+}
+
+// =============================
+// Family (Account) Model
+// =============================
+
+model Family {
+  id       Int     @id @default(autoincrement())
+  email    String  @unique
+  password String
+  phone    String? // Optional phone number for the account
+
+  // All parents and children in this family account
+  parents  Parent[]
+  children Child[]
+}
+
+// =============================
+// Profile Models: Parent and Child
+// =============================
+
+model Parent {
+  id       Int    @id @default(autoincrement())
+  personId Int    @unique
+  person   Person @relation(fields: [personId], references: [id])
+
+  // Link to the family account
+  familyId Int
+  family   Family @relation(fields: [familyId], references: [id])
+
+  // Contact & capacity info
+  email String @unique
+  phone String // Individual phone number if needed
+  seats Int // Number of seats available if driving
+
+  // Memberships: registrations into carpool groups
+  memberships ParentMembership[]
+
+  // As a driver for a Carpool
+  drivingCarpools Carpool[]
+
+  // New relation: Admins of carpool groups
+  adminForGroups CarpoolGroupAdmin[]
+}
+
+model Child {
+  id       Int    @id @default(autoincrement())
+  personId Int    @unique
+  person   Person @relation(fields: [personId], references: [id])
+
+  // Link to the family account
+  familyId Int
+  family   Family @relation(fields: [familyId], references: [id])
+
+  boosterSeat Boolean
+  frontSeat   Boolean
+
+  // Memberships: registrations into carpool groups
+  memberships ChildMembership[]
+
+  // Optionally, a Child can be assigned to a Carpool
+  carpoolId Int?
+  carpool   Carpool? @relation(fields: [carpoolId], references: [id])
+}
+
+// =============================
+// Carpool Groups, Trip Times, and Carpools
+// =============================
+
+model CarpoolGroup {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  // Admins are now managed via CarpoolGroupAdmin
+  admins CarpoolGroupAdmin[] // new relation
+
+  // Trip times set by the admin at group creation
+  tripTimes TripTime[]
+
+  // Group memberships (registrations) for parents and children
+  parentMemberships ParentMembership[]
+  childMemberships  ChildMembership[]
+
+  // Organized Carpools for this group
+  carpools Carpool[]
+
+  createdAt DateTime @default(now()) // tracking when the group was created
+}
+
+model TripTime {
+  id    Int    @id @default(autoincrement())
+  label String // e.g., "Monday morning", "Thursday evening"
+
+  // TripTime is defined for a specific CarpoolGroup
+  carpoolGroupId Int
+  carpoolGroup   CarpoolGroup @relation(fields: [carpoolGroupId], references: [id])
+
+  // Inverse many-to-many: which ParentMemberships selected this time
+  parentMemberships ParentMembership[] @relation("ParentTripTimeAvailability")
+  // Inverse many-to-many: which ChildMemberships selected this time
+  childMemberships  ChildMembership[]  @relation("ChildTripTimeAvailability")
+}
+
+model Carpool {
+  id             Int          @id @default(autoincrement())
+  carpoolGroupId Int
+  carpoolGroup   CarpoolGroup @relation(fields: [carpoolGroupId], references: [id])
+
+  // The driver for this carpool (a Parent)
+  driverId Int
+  driver   Parent @relation(fields: [driverId], references: [id])
+
+  // Child passengers for this carpool
+  passengers Child[]
+}
+
+// =============================
+// Carpool Group Admin
+// =============================
+
+model CarpoolGroupAdmin {
+  id             Int @id @default(autoincrement())
+  parentId       Int
+  carpoolGroupId Int
+
+  parent       Parent       @relation(fields: [parentId], references: [id])
+  carpoolGroup CarpoolGroup @relation(fields: [carpoolGroupId], references: [id])
+
+  @@unique([parentId, carpoolGroupId])
+}
+
+// =============================
+// Membership Join Tables for CarpoolGroup Registrations
+// =============================
+
+model ParentMembership {
+  id             Int          @id @default(autoincrement())
+  parentId       Int
+  parent         Parent       @relation(fields: [parentId], references: [id])
+  carpoolGroupId Int
+  carpoolGroup   CarpoolGroup @relation(fields: [carpoolGroupId], references: [id])
+
+  // The trip times (from the group's available options) that the parent selects
+  selectedTripTimes TripTime[] @relation("ParentTripTimeAvailability")
+
+  @@unique([parentId, carpoolGroupId])
+}
+
+model ChildMembership {
+  id             Int          @id @default(autoincrement())
+  childId        Int
+  child          Child        @relation(fields: [childId], references: [id])
+  carpoolGroupId Int
+  carpoolGroup   CarpoolGroup @relation(fields: [carpoolGroupId], references: [id])
+
+  // The trip times (from the group's available options) that the child selects
+  selectedTripTimes TripTime[] @relation("ChildTripTimeAvailability")
+
+  @@unique([childId, carpoolGroupId])
+}
