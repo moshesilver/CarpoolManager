@@ -4,3 +4,4 @@ temp/
 .env
 *.db
 .vscode
+*.db-journal

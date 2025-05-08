@@ -12,6 +12,7 @@ datasource db {
 // =============================
 
 model Address {
+  // this may be replaced by a Google Maps (or similar) address for routing purposes
   id     Int    @id @default(autoincrement())
   street String
   city   String
@@ -20,9 +21,12 @@ model Address {
 
   // Inverse relation – people with this address
   people Person[]
+
+  @@unique([street, city, state, zip], name: "street_city_state_zip") // Ensure unique address entries
 }
 
 model Person {
+  // Person model to represent individuals
   id        Int     @id @default(autoincrement())
   name      String
   addressId Int
@@ -38,10 +42,10 @@ model Person {
 // =============================
 
 model Family {
-  id       Int     @id @default(autoincrement())
-  email    String  @unique
-  password String
-  phone    String? // Optional phone number for the account
+  // Represents a family account with multiple members (parents and children)
+  id          Int     @id @default(autoincrement())
+  clerkUserId String  @unique // Unique identifier for the clerk user
+  phone       String? @unique // Optional phone number for the account
 
   // All parents and children in this family account
   parents  Parent[]
@@ -101,8 +105,13 @@ model Child {
 // =============================
 
 model CarpoolGroup {
+  /**
+   * Represents a carpool group for parents and children to register into
+   * Each group contains all parents and children that will be divided into carpool rides
+   * Each group has a set of trip times that are available for parents and children to select
+   */
   id   Int    @id @default(autoincrement())
-  name String
+  name String @unique // Unique name for the carpool group
 
   // Admins are now managed via CarpoolGroupAdmin
   admins CarpoolGroupAdmin[] // new relation
@@ -121,6 +130,10 @@ model CarpoolGroup {
 }
 
 model TripTime {
+  /**
+   * Represents a specific time slot for a carpool group
+   * Each group can have multiple trip times, and each time can be selected by multiple parents/children
+   */
   id    Int    @id @default(autoincrement())
   label String // e.g., "Monday morning", "Thursday evening"
 
@@ -132,9 +145,15 @@ model TripTime {
   parentMemberships ParentMembership[] @relation("ParentTripTimeAvailability")
   // Inverse many-to-many: which ChildMemberships selected this time
   childMemberships  ChildMembership[]  @relation("ChildTripTimeAvailability")
+
+  @@unique([carpoolGroupId, label], name: "one_label_per_group") // Ensure unique trip time labels within a group
 }
 
 model Carpool {
+  /**
+   * This is a carpool ride instance containing one driver and multiple passengers
+   * Many of these carpool rides together form a carpool group
+   */
   id             Int          @id @default(autoincrement())
   carpoolGroupId Int
   carpoolGroup   CarpoolGroup @relation(fields: [carpoolGroupId], references: [id])
@@ -143,8 +162,10 @@ model Carpool {
   driverId Int
   driver   Parent @relation(fields: [driverId], references: [id])
 
-  // Child passengers for this carpool
+  // Child passengers for this carpool ride
   passengers Child[]
+
+  @@unique([carpoolGroupId, driverId], name: "one_carpool_per_driver_per_group") // Ensure one driver per carpool per ride
 }
 
 // =============================
@@ -152,6 +173,10 @@ model Carpool {
 // =============================
 
 model CarpoolGroupAdmin {
+  /**
+   * Represents a parent who is an admin for a carpool group
+   * This allows for multiple admins per group and multiple groups per admin
+   */
   id             Int @id @default(autoincrement())
   parentId       Int
   carpoolGroupId Int
@@ -167,6 +192,10 @@ model CarpoolGroupAdmin {
 // =============================
 
 model ParentMembership {
+  /**
+   * Represents a parent who has registered into a carpool group
+   * This allows for multiple parents per group and multiple groups per parent
+   */
   id             Int          @id @default(autoincrement())
   parentId       Int
   parent         Parent       @relation(fields: [parentId], references: [id])
@@ -180,6 +209,10 @@ model ParentMembership {
 }
 
 model ChildMembership {
+  /**
+   * Represents a child who has registered into a carpool group
+   * This allows for multiple children per group and multiple groups per child
+   */
   id             Int          @id @default(autoincrement())
   childId        Int
   child          Child        @relation(fields: [childId], references: [id])
