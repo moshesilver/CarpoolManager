@@ -10,6 +10,7 @@ export interface ParentInput {
 	email: string;
 	phone: string;
 	seats: number;
+	sameAddress?: boolean;
 	address: AddressInput;
 }
 
@@ -17,6 +18,7 @@ export interface ChildInput {
 	name: string;
 	boosterSeat: boolean;
 	frontSeat: boolean;
+	sameAddress?: boolean;
 	address: AddressInput;
 }
 
