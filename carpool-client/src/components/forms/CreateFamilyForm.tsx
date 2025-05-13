@@ -4,7 +4,13 @@ import AddressSubform from './AddressSubform';
 
 export default function CreateFamilyForm() {
 	// --- RHF setup ---
-	const { register, control, watch } = useFormContext<FamilyInput>();
+	const {
+		register,
+		control,
+		watch,
+		formState: { errors }
+	} = useFormContext<FamilyInput>();
+
 	const allValues = watch();
 
 	const {
@@ -27,6 +33,8 @@ export default function CreateFamilyForm() {
 					i > 0 &&
 					allValues.parents[0]?.address &&
 					allValues.parents[i]?.sameAddress;
+
+				const parentAddressErrors = errors.parents?.[i]?.address;
 
 				return (
 					<div key={p.id} className="border p-4 mb-4 relative">
@@ -67,7 +75,12 @@ export default function CreateFamilyForm() {
 							</label>
 						)}
 
-						{!sameAsFirst && <AddressSubform name={`parents.${i}.address`} />}
+						{!sameAsFirst && (
+							<AddressSubform
+								name={`parents.${i}.address`}
+								errors={parentAddressErrors}
+							/>
+						)}
 
 						<button
 							type="button"
@@ -100,6 +113,9 @@ export default function CreateFamilyForm() {
 			{/* Children */}
 			{children.map((c, i) => {
 				const sameAsParent0 = allValues.children[i]?.sameAddress;
+
+				const childAddressErrors = errors.children?.[i]?.address;
+
 				return (
 					<div key={c.id} className="border p-4 mb-4 relative">
 						<h3 className="font-semibold mb-2">Child #{i + 1}</h3>
@@ -132,7 +148,10 @@ export default function CreateFamilyForm() {
 						)}
 
 						{!sameAsParent0 && (
-							<AddressSubform name={`children.${i}.address`} />
+							<AddressSubform
+								name={`children.${i}.address`}
+								errors={childAddressErrors}
+							/>
 						)}
 
 						<button

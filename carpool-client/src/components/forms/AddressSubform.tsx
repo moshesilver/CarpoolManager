@@ -1,4 +1,4 @@
-import type { FieldErrors } from 'react-hook-form';
+import { useFormContext, type FieldErrors } from 'react-hook-form';
 import type { AddressInput } from '../../types';
 
 type Props = {
@@ -8,10 +8,15 @@ type Props = {
 };
 
 export default function AddressSubform({ name, errors }: Props) {
+	const { register } = useFormContext();
+
+	const field = <K extends keyof AddressInput>(key: K) =>
+		`${name}.${key}` as const;
+
 	return (
 		<div className="grid grid-cols-1 gap-2">
 			<input
-				{...{ name: `${name}.street` }}
+				{...register(field('street'), { required: true })}
 				placeholder="Street"
 				className="block w-full"
 			/>
@@ -20,7 +25,7 @@ export default function AddressSubform({ name, errors }: Props) {
 			)}
 
 			<input
-				{...{ name: `${name}.city` }}
+				{...register(field('city'), { required: true })}
 				placeholder="City"
 				className="block w-full"
 			/>
@@ -29,7 +34,7 @@ export default function AddressSubform({ name, errors }: Props) {
 			)}
 
 			<input
-				{...{ name: `${name}.state` }}
+				{...register(field('state'), { required: true })}
 				placeholder="State"
 				className="block w-full"
 			/>
@@ -38,7 +43,7 @@ export default function AddressSubform({ name, errors }: Props) {
 			)}
 
 			<input
-				{...{ name: `${name}.zip` }}
+				{...register(field('zip'), { required: true })}
 				placeholder="ZIP"
 				className="block w-full"
 			/>

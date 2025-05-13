@@ -32,6 +32,8 @@ interface FamilyInput {
   children: ChildInput[];
 }
 
+// all family requests are mounted on / instead of /:id to prevent access to families by id
+
 router
   .route('/')
   .get(async (req: Request, res: Response, next: NextFunction) => {
@@ -141,5 +143,4 @@ router
       next(err);
     }
   });
-
 export default router;
