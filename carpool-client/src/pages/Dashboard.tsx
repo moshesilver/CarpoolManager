@@ -1,6 +1,7 @@
 import { useAuth } from '@clerk/clerk-react';
 import { useEffect, useState } from 'react';
 import type { FamilyOutput } from '../types';
+import { useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
 	const [loading, setLoading] = useState(true);
@@ -8,6 +9,7 @@ export default function Dashboard() {
 	const [family, setFamily] = useState<FamilyOutput | null>(null);
 
 	const { getToken } = useAuth();
+	const navigate = useNavigate();
 
 	useEffect(() => {
 		(async () => {
@@ -51,6 +53,12 @@ export default function Dashboard() {
 						<p>
 							Address: {p.person.address.street}, {p.person.address.city},{' '}
 							{p.person.address.state} {p.person.address.zip}
+							<button
+								className="text-blue-500 hover:underline ml-2"
+								onClick={() => navigate(`/edit-address/${p.person.id}`)}
+							>
+								Edit Address
+							</button>
 						</p>
 					</div>
 				))}
@@ -66,6 +74,12 @@ export default function Dashboard() {
 						<p>
 							Address: {c.person.address.street}, {c.person.address.city},{' '}
 							{c.person.address.state} {c.person.address.zip}
+							<button
+								className="text-blue-500 hover:underline ml-2"
+								onClick={() => navigate(`/edit-address/${c.person.id}`)}
+							>
+								Edit Address
+							</button>
 						</p>
 					</div>
 				))}

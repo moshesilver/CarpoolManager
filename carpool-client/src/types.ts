@@ -6,7 +6,7 @@ export interface AddressInput {
 }
 
 export interface AddressOutput {
-	id: string;
+	id: number;
 	street: string;
 	city: string;
 	state: string;
@@ -14,7 +14,7 @@ export interface AddressOutput {
 }
 
 export interface PersonOutput {
-	id: string;
+	id: number;
 	name: string;
 	address: AddressOutput;
 }
@@ -29,7 +29,7 @@ export interface ParentInput {
 }
 
 export interface ParentOutput {
-	id: string;
+	id: number;
 	person: PersonOutput;
 	email: string;
 	phone: string;
@@ -45,7 +45,7 @@ export interface ChildInput {
 }
 
 export interface ChildOutput {
-	id: string;
+	id: number;
 	person: PersonOutput;
 	boosterSeat: boolean;
 	frontSeat: boolean;
@@ -57,7 +57,7 @@ export interface FamilyInput {
 }
 
 export interface FamilyOutput {
-	id: string;
+	id: number;
 	parents: ParentOutput[];
 	children: ChildOutput[];
 }

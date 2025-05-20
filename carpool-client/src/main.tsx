@@ -1,21 +1,15 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import {
-	ClerkProvider,
-	// RedirectToSignIn,
-	SignIn,
-	SignUp
-	// SignedIn,
-	// SignedOut
-} from '@clerk/clerk-react';
+import { ClerkProvider, SignIn, SignUp } from '@clerk/clerk-react';
 import './index.css';
-import AppLayout from './Layout.tsx';
+import Layout from './Layout.tsx';
 import Home from './pages/Home.tsx';
 import NotFound from './pages/NotFound.tsx';
 import Dashboard from './pages/Dashboard.tsx';
 import CreateFamily from './pages/CreateFamily.tsx';
 import ProtectedRoute from './components/ProtectedRoute.tsx';
+import EditAddress from './pages/EditAddress.tsx';
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
@@ -25,11 +19,10 @@ if (!PUBLISHABLE_KEY) {
 
 createRoot(document.getElementById('root')!).render(
 	<StrictMode>
-		{/* <ErrorProvider> */}
 		<ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
 			<BrowserRouter>
 				<Routes>
-					<Route path="/" element={<AppLayout />}>
+					<Route path="/" element={<Layout />}>
 						{/* Public Routes */}
 						<Route index element={<Home />} />
 						<Route
@@ -45,6 +38,7 @@ createRoot(document.getElementById('root')!).render(
 						<Route path="/" element={<ProtectedRoute />}>
 							<Route path="dashboard" element={<Dashboard />} />
 							<Route path="create-family" element={<CreateFamily />} />
+							<Route path="edit-address/:personId" element={<EditAddress />} />
 						</Route>
 
 						{/* Catch-all Route */}
@@ -53,6 +47,5 @@ createRoot(document.getElementById('root')!).render(
 				</Routes>
 			</BrowserRouter>
 		</ClerkProvider>
-		{/* </ErrorProvider> */}
 	</StrictMode>
 );

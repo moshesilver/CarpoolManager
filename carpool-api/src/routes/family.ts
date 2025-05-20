@@ -1,5 +1,5 @@
 import express, { Request, Response, NextFunction } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { getAuth } from '@clerk/express';
 
 const router = express.Router();
@@ -32,8 +32,15 @@ interface FamilyInput {
   children: ChildInput[];
 }
 
-// all family requests are mounted on / instead of /:id to prevent access to families by id
+interface UpdateAddressBody {
+  sameAsId?: string;
+  street?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+}
 
+// all family requests are mounted on / instead of /:id to prevent access to families by id
 router
   .route('/')
   .get(async (req: Request, res: Response, next: NextFunction) => {
@@ -143,4 +150,130 @@ router
       next(err);
     }
   });
+
+router
+  .route('/:personId/address')
+  .patch(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = getAuth(req);
+      if (!userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const personId = Number(req.params.personId);
+      const body = req.body as UpdateAddressBody;
+
+      // Ensure the person belongs to this user’s family
+      const person = await prisma.person.findUnique({
+        where: { id: personId },
+        include: {
+          parent: { include: { family: true } },
+          child: { include: { family: true } }
+        }
+      });
+      if (!person) {
+        res.status(404).json({ error: 'Person not found' });
+        return;
+      }
+
+      const clerkUserId =
+        person.parent?.family.clerkUserId ?? person.child?.family.clerkUserId;
+      if (clerkUserId !== userId) {
+        res.status(403).json({ error: 'Forbidden' });
+        return;
+      }
+
+      // If sameAsId, just reassign
+      if (body.sameAsId !== null && body.sameAsId !== '') {
+        const sameAsId = Number(body.sameAsId);
+        if (isNaN(sameAsId)) {
+          res.status(400).json({ error: 'sameAsId must be a number' });
+          return;
+        }
+        await prisma.person.update({
+          where: { id: personId },
+          data: { addressId: sameAsId }
+        });
+        res.json({ success: true });
+        return;
+      }
+
+      const { street, city, state, zip } = body;
+      if (!(street && city && state && zip)) {
+        res.status(400).json({ error: 'Incomplete address' });
+        return;
+      }
+
+      await prisma.person.update({
+        where: {
+          id: personId
+        },
+        data: {
+          address: {
+            connectOrCreate: {
+              where: {
+                street_city_state_zip: { street, city, state, zip }
+              },
+              create: { street, city, state, zip }
+            }
+          }
+        }
+      });
+
+      res.json({ success: true });
+      return;
+    } catch (err: unknown) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError) {
+        res.status(400).json({ error: err.message });
+        return;
+      }
+      next(err);
+    }
+  });
+
+/* router
+  .route('/address/:addressId')
+  .get(async (req, res, next) => {
+    try {
+      const { userId } = getAuth(req);
+      if (!userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      const aid = Number(req.params.addressId);
+      const addr = await prisma.address.findUnique({ where: { id: aid } });
+      if (!addr) {
+        res.status(404).json({ error: 'Not found' });
+        return;
+      }
+      res.json(addr);
+    } catch (err) {
+      next(err);
+    }
+  })
+  .patch(async (req, res, next) => {
+    try {
+      const { userId } = getAuth(req);
+      if (!userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      const aid = Number(req.params.addressId);
+      const body = req.body as AddressInput;
+      const updated = await prisma.address.update({
+        where: { id: aid },
+        data: {
+          street: body.street,
+          city: body.city,
+          state: body.state,
+          zip: body.zip
+        }
+      });
+      res.json(updated);
+    } catch (err) {
+      next(err);
+    }
+  }); */
+
 export default router;
