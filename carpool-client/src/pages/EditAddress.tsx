@@ -59,7 +59,7 @@ export default function EditAddress() {
 						addressId: p.person.address.id
 					})),
 					...family.children.map(c => ({
-						id: c.id,
+						id: c.person.id,
 						name: c.person.name,
 						addressId: c.person.address.id
 					}))
