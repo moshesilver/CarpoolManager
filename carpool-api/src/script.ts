@@ -37,3 +37,5 @@ app.use(
 
 const PORT = process.env.PORT || 3000; // should i have a default port?
 server.listen(PORT, () => console.log(`listening on port ${PORT}`));
+
+export default app;
