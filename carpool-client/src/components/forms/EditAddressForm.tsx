@@ -27,7 +27,6 @@ export default function EditAddressForm({ members, selfId }: Props) {
 						type="radio"
 						value=""
 						{...register('sameAsId', { valueAsNumber: true })}
-						// defaultChecked={!sameAsId}
 					/>{' '}
 					Edit manually
 				</label>
@@ -75,7 +74,7 @@ export default function EditAddressForm({ members, selfId }: Props) {
 								value={m.addressId}
 								{...register('sameAsId', { valueAsNumber: true })}
 							/>{' '}
-							{m.name} ({/* optionally show their address */})
+							{m.name}
 						</label>
 					))}
 			</fieldset>

@@ -15,7 +15,7 @@ type FormPageProps<T extends FieldValues> = {
 	defaultValues: DefaultValues<T>;
 	/** what to do with the form data on submit */
 	onSubmit: (data: T) => Promise<void>;
-	// onCancel?: () => void; // only necessary if I want to customize cancel
+	onCancel?: () => void; // only necessary if I want to customize cancel
 	/** the actual form fields (must live inside useFormContext) */
 	children: ReactNode;
 };
@@ -24,7 +24,8 @@ export default function FormPage<T extends FieldValues>({
 	title,
 	defaultValues: initialValues,
 	onSubmit,
-	children
+	children,
+	onCancel
 }: FormPageProps<T>) {
 	const methods = useForm<T>({ defaultValues: initialValues });
 	const { handleSubmit, reset } = methods;
@@ -53,7 +54,7 @@ export default function FormPage<T extends FieldValues>({
 					onSubmit={handleSubmit(wrappedSubmit)}
 					isSubmitting={isSubmitting}
 					errorMessage={errorMessage}
-					onCancel={() => reset()}
+					onCancel={() => (onCancel ? onCancel() : reset())}
 				>
 					{children}
 				</FormContainer>

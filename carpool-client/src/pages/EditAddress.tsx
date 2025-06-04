@@ -103,6 +103,10 @@ export default function EditAddress() {
 		}
 	};
 
+	const onCancel = () => {
+		navigate(-1);
+	};
+
 	if (loadError) {
 		return <ErrorBanner message={loadError} />;
 	}
@@ -114,6 +118,7 @@ export default function EditAddress() {
 			title="Edit Address"
 			defaultValues={{ ...initial, sameAsId: undefined }}
 			onSubmit={onSubmit}
+			onCancel={onCancel}
 		>
 			<EditAddressForm members={members} selfId={pid} />
 		</FormPage>
