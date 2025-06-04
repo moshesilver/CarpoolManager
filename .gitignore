@@ -5,3 +5,4 @@ temp/
 *.db
 .vscode
 *.db-journal
+printAllFilesAndFolders.js
