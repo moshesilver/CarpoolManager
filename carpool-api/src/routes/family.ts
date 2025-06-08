@@ -32,17 +32,28 @@ interface FamilyInput {
   children: ChildInput[];
 }
 
-interface UpdateAddressBody {
-  sameAsId?: string;
-  street?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
+interface SameAsAddress {
+  sameAsId: string;
+  street?: never;
+  city?: never;
+  state?: never;
+  zip?: never;
 }
+
+interface FullAddress {
+  sameAsId?: never;
+  street: string;
+  city: string;
+  state: string;
+  zip: string;
+}
+
+type UpdateAddressBody = SameAsAddress | FullAddress;
 
 // all family requests are mounted on / instead of /:id to prevent access to families by id
 router
   .route('/')
+  // returns user family
   .get(async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { userId } = getAuth(req);
@@ -71,6 +82,7 @@ router
       next(err);
     }
   })
+  // creates user family
   .post(async (req: Request, res: Response, next: NextFunction) => {
     const { userId } = getAuth(req);
     if (!userId) {
@@ -153,6 +165,7 @@ router
 
 router
   .route('/:personId/address')
+  //edits persons address
   .patch(async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { userId } = getAuth(req);
