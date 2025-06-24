@@ -13,6 +13,24 @@ export interface AddressOutput {
 	zip: string;
 }
 
+interface CopyAddress {
+	sameAsId: number;
+	street?: never;
+	city?: never;
+	state?: never;
+	zip?: never;
+}
+
+interface ManualAddress {
+	sameAsId?: never;
+	street: string;
+	city: string;
+	state: string;
+	zip: string;
+}
+
+export type AddressFormData = CopyAddress | ManualAddress;
+
 export interface PersonOutput {
 	id: number;
 	name: string;
