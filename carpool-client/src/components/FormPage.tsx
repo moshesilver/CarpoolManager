@@ -1,9 +1,7 @@
-import { useState } from 'react';
-import {
-	useForm,
-	FormProvider,
-	type FieldValues,
-	type DefaultValues
+import type {
+	FieldValues,
+	DefaultValues,
+	SubmitHandler
 } from 'react-hook-form';
 import type { ReactNode } from 'react';
 import FormContainer from './FormContainer';
@@ -14,51 +12,35 @@ type FormPageProps<T extends FieldValues> = {
 	/** initial values for RHF */
 	defaultValues: DefaultValues<T>;
 	/** what to do with the form data on submit */
-	onSubmit: (data: T) => Promise<void>;
+	onSubmit: SubmitHandler<T>;
 	onCancel?: () => void; // only necessary if I want to customize cancel
 	/** the actual form fields (must live inside useFormContext) */
 	children: ReactNode;
+	isSubmitting: boolean; // this is handled by FormContainer
+	errorMessage?: string; // this is handled by FormContainer
 };
 
 export default function FormPage<T extends FieldValues>({
 	title,
-	defaultValues: initialValues,
+	defaultValues,
 	onSubmit,
+	onCancel,
 	children,
-	onCancel
+	isSubmitting = false,
+	errorMessage
 }: FormPageProps<T>) {
-	const methods = useForm<T>({ defaultValues: initialValues });
-	const { handleSubmit, reset } = methods;
-
-	const [isSubmitting, setSubmitting] = useState(false);
-	const [errorMessage, setError] = useState<string>('');
-
-	const wrappedSubmit = async (data: T) => {
-		setSubmitting(true);
-		setError('');
-		try {
-			await onSubmit(data);
-			reset();
-		} catch (e: unknown) {
-			setError(e instanceof Error ? e.message : 'Unknown error');
-		} finally {
-			setSubmitting(false);
-		}
-	};
-
 	return (
 		<div>
 			<h1 className="text-2xl font-bold mb-4">{title}</h1>
-			<FormProvider {...methods}>
-				<FormContainer
-					onSubmit={handleSubmit(wrappedSubmit)}
-					isSubmitting={isSubmitting}
-					errorMessage={errorMessage}
-					onCancel={() => (onCancel ? onCancel() : reset())}
-				>
-					{children}
-				</FormContainer>
-			</FormProvider>
+			<FormContainer<T>
+				defaultValues={defaultValues}
+				onSubmit={onSubmit}
+				onCancel={onCancel}
+				isSubmitting={isSubmitting}
+				errorMessage={errorMessage}
+			>
+				{children}
+			</FormContainer>
 		</div>
 	);
 }

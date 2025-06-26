@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import ErrorBanner from '../components/ErrorBanner';
 import FormPage from '../components/FormPage';
 import EditAddressForm from '../components/forms/EditAddressForm';
-import type { AddressInput, FamilyOutput } from '../types';
+import type { AddressFormData, AddressInput, FamilyOutput } from '../types';
 
 type Member = {
 	id: number;
@@ -21,6 +21,8 @@ export default function EditAddress() {
 	const [loadError, setLoadError] = useState<string | null>(null);
 	const [initial, setInitial] = useState<AddressInput | null>(null);
 	const [members, setMembers] = useState<Member[]>([]);
+	const [isSubmitting, setSubmitting] = useState(false);
+	const [errorMessage, setErrorMessage] = useState<string>('');
 
 	useEffect(() => {
 		(async () => {
@@ -52,27 +54,25 @@ export default function EditAddress() {
 				setInitial({ street, city, state, zip });
 
 				// build members list
-				setMembers([
-					...family.parents.map(p => ({
-						id: p.person.id,
-						name: p.person.name,
-						addressId: p.person.address.id
-					})),
-					...family.children.map(c => ({
-						id: c.person.id,
-						name: c.person.name,
-						addressId: c.person.address.id
+				const people = [...family.parents, ...family.children];
+				setMembers(
+					people.map(({ person }) => ({
+						id: person.id,
+						name: person.name,
+						addressId: person.address.id
 					}))
-				]);
+				);
 			} catch (err: unknown) {
 				setLoadError(err instanceof Error ? err.message : 'Unknown error');
 			}
 		})();
 	}, [personId, getToken, pid]);
 
-	const onSubmit = async (data: AddressInput & { sameAsId?: number }) => {
+	const handleSubmit = async (data: AddressFormData) => {
+		setSubmitting(true);
+		setErrorMessage('');
+
 		try {
-			const pid = Number(personId);
 			if (isNaN(pid)) throw new Error('Invalid personId');
 
 			const token = await getToken();
@@ -100,11 +100,9 @@ export default function EditAddress() {
 			navigate(-1);
 		} catch (err: unknown) {
 			setLoadError(err instanceof Error ? err.message : 'Unknown error');
+		} finally {
+			setSubmitting(false);
 		}
-	};
-
-	const onCancel = () => {
-		navigate(-1);
 	};
 
 	if (loadError) {
@@ -114,11 +112,13 @@ export default function EditAddress() {
 	if (!initial) return <p>Loading…</p>;
 
 	return (
-		<FormPage<AddressInput & { sameAsId?: number }>
+		<FormPage<AddressFormData>
 			title="Edit Address"
 			defaultValues={{ ...initial, sameAsId: undefined }}
-			onSubmit={onSubmit}
-			onCancel={onCancel}
+			onSubmit={handleSubmit}
+			onCancel={() => navigate(-1)}
+			isSubmitting={isSubmitting}
+			errorMessage={errorMessage}
 		>
 			<EditAddressForm members={members} selfId={pid} />
 		</FormPage>

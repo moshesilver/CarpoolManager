@@ -1,44 +1,64 @@
-import type { FormEvent, ReactNode } from 'react';
+import type { PropsWithChildren } from 'react';
+import {
+	useForm,
+	FormProvider,
+	type SubmitHandler,
+	type DefaultValues,
+	type FieldValues
+} from 'react-hook-form';
 
-type FormContainerProps = {
-	onSubmit: (e: FormEvent) => void;
+export interface FormContainerProps<T extends FieldValues> {
+	defaultValues: DefaultValues<T>;
+	onSubmit: SubmitHandler<T>;
+	onCancel?: () => void;
 	isSubmitting: boolean;
 	errorMessage?: string;
-	onCancel: () => void;
-	children: ReactNode;
-};
+}
 
-export default function FormContainer({
+export default function FormContainer<T extends FieldValues>({
+	defaultValues,
 	onSubmit,
-	isSubmitting,
-	errorMessage,
 	onCancel,
+	isSubmitting = false,
+	errorMessage,
 	children
-}: FormContainerProps) {
+}: PropsWithChildren<FormContainerProps<T>>) {
+	// initialize RHF with DefaultValues<T>
+	const methods = useForm<T>({ defaultValues });
+
 	return (
-		<form onSubmit={onSubmit} className="space-y-6" noValidate>
-			{errorMessage && (
-				<div className="text-red-600 font-medium">{errorMessage}</div>
-			)}
+		<FormProvider {...methods}>
+			<form
+				onSubmit={methods.handleSubmit(onSubmit)}
+				className="space-y-6"
+				noValidate
+			>
+				{errorMessage && (
+					<div className="text-red-600 font-medium">{errorMessage}</div>
+				)}
 
-			{children}
+				{children}
 
-			<div className="flex space-x-4">
-				<button
-					type="button"
-					onClick={onCancel}
-					className="px-4 py-2 bg-blue-600 text-white rounded"
-				>
-					Cancel
-				</button>
-				<button
-					type="submit"
-					disabled={isSubmitting}
-					className="px-4 py-2 bg-blue-600 text-white rounded"
-				>
-					{isSubmitting ? 'Submitting...' : 'Submit'}
-				</button>
-			</div>
-		</form>
+				<div className="flex space-x-4">
+					<button
+						type="button"
+						onClick={onCancel} // might need to add defalut function to use instead??
+						className="px-4 py-2 bg-blue-600 text-white rounded"
+					>
+						Cancel
+					</button>
+
+					<button
+						type="submit"
+						disabled={isSubmitting || methods.formState.isSubmitting}
+						className="px-4 py-2 bg-blue-600 text-white rounded"
+					>
+						{isSubmitting || methods.formState.isSubmitting
+							? 'Submitting...'
+							: 'Submit'}
+					</button>
+				</div>
+			</form>
+		</FormProvider>
 	);
 }
