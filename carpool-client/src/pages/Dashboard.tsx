@@ -2,11 +2,15 @@ import { useAuth } from '@clerk/clerk-react';
 import { useEffect, useState } from 'react';
 import type { FamilyOutput } from '../types';
 import { useNavigate } from 'react-router-dom';
+import FormContainer from '../components/FormContainer';
+import EditSeatInput from '../components/forms/EditSeatInput';
 
 export default function Dashboard() {
 	const [loading, setLoading] = useState(true);
 	const [errorMessage, setErrorMessage] = useState<string>('');
 	const [family, setFamily] = useState<FamilyOutput | null>(null);
+	const [editingSeats, setEditingSeats] = useState(false);
+	const [isSubmitting, setSubmitting] = useState(false);
 
 	const { getToken } = useAuth();
 	const navigate = useNavigate();
@@ -37,6 +41,58 @@ export default function Dashboard() {
 		})();
 	}, [getToken]);
 
+	async function handleSubmitSeats(seats: number, pid: number) {
+		setSubmitting(true);
+		setErrorMessage('');
+
+		try {
+			if (seats < 1) {
+				throw new Error('Seats must be at least 1');
+			}
+
+			const token = await getToken();
+			if (!token) {
+				throw new Error('You must be logged in to update seats');
+			}
+
+			const res = await fetch(
+				`${import.meta.env.VITE_API_URL}/family/${pid}/seats`,
+				{
+					method: 'PATCH',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${token}`
+					},
+					body: JSON.stringify({ seats })
+				}
+			);
+			if (!res.ok) {
+				const body = await res.json().catch(() => ({}));
+				throw new Error(body.error ?? `HTTP ${res.status}`);
+			}
+
+			setFamily(f => {
+				if (!f) return f;
+				return {
+					...f,
+					parents: f.parents.map(p =>
+						p.person.id === pid
+							? {
+									...p,
+									seats
+							  }
+							: p
+					)
+				};
+			});
+		} catch (err: unknown) {
+			setErrorMessage(err instanceof Error ? err.message : 'Unknown error');
+		} finally {
+			setSubmitting(false);
+			setEditingSeats(false);
+		}
+	}
+
 	return (
 		<div>
 			<h1>Your Dashboard</h1>
@@ -49,7 +105,28 @@ export default function Dashboard() {
 						<p>Name: {p.person.name}</p>
 						<p>Email: {p.email}</p>
 						<p>Phone: {p.phone}</p>
-						<p>Seats: {p.seats}</p>
+						<p>
+							Seats: {p.seats}
+							{!editingSeats && (
+								<button
+									className="text-blue-500 hover:underline ml-2"
+									onClick={() => setEditingSeats(true)}
+								>
+									Edit
+								</button>
+							)}
+						</p>
+						{editingSeats && (
+							<FormContainer
+								defaultValues={{ seats: p.seats }}
+								onSubmit={({ seats }) => handleSubmitSeats(seats, p.person.id)}
+								onCancel={() => setEditingSeats(false)}
+								isSubmitting={isSubmitting}
+								errorMessage={errorMessage}
+							>
+								<EditSeatInput />
+							</FormContainer>
+						)}
 						<p>
 							Address: {p.person.address.street}, {p.person.address.city},{' '}
 							{p.person.address.state} {p.person.address.zip}
