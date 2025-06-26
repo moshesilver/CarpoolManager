@@ -6,7 +6,7 @@ import type {
 import type { ReactNode } from 'react';
 import FormContainer from './FormContainer';
 
-type FormPageProps<T extends FieldValues> = {
+interface FormPageProps<T extends FieldValues> {
 	/** Page title above the form */
 	title: string;
 	/** initial values for RHF */
@@ -18,7 +18,7 @@ type FormPageProps<T extends FieldValues> = {
 	children: ReactNode;
 	isSubmitting: boolean; // this is handled by FormContainer
 	errorMessage?: string; // this is handled by FormContainer
-};
+}
 
 export default function FormPage<T extends FieldValues>({
 	title,
