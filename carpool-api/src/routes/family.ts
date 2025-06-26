@@ -165,7 +165,7 @@ router
 
 router
   .route('/:personId/address')
-  //edits persons address
+  // edits persons address
   .patch(async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { userId } = getAuth(req);
@@ -245,48 +245,62 @@ router
     }
   });
 
-/* router
-  .route('/address/:addressId')
-  .get(async (req, res, next) => {
+router
+  .route('/:personId/seats')
+  // edits parents seats
+  .patch(async (req: Request, res: Response, next: NextFunction) => {
     try {
+      // Ensure user is authenticated
       const { userId } = getAuth(req);
       if (!userId) {
         res.status(401).json({ error: 'Unauthorized' });
         return;
       }
-      const aid = Number(req.params.addressId);
-      const addr = await prisma.address.findUnique({ where: { id: aid } });
-      if (!addr) {
-        res.status(404).json({ error: 'Not found' });
+
+      // Ensure personId is a number
+      const personId = Number(req.params.personId);
+      if (isNaN(personId)) {
+        res.status(400).json({ error: 'Invalid personId' });
         return;
       }
-      res.json(addr);
-    } catch (err) {
-      next(err);
-    }
-  })
-  .patch(async (req, res, next) => {
-    try {
-      const { userId } = getAuth(req);
-      if (!userId) {
-        res.status(401).json({ error: 'Unauthorized' });
-        return;
-      }
-      const aid = Number(req.params.addressId);
-      const body = req.body as AddressInput;
-      const updated = await prisma.address.update({
-        where: { id: aid },
-        data: {
-          street: body.street,
-          city: body.city,
-          state: body.state,
-          zip: body.zip
+
+      // Ensure person is a parent
+      const person = await prisma.person.findUnique({
+        where: { id: personId },
+        include: {
+          parent: { include: { family: true } }
         }
       });
-      res.json(updated);
-    } catch (err) {
+      if (!person || !person.parent) {
+        res.status(404).json({ error: 'Parent not found' });
+        return;
+      }
+      if (person.parent.family.clerkUserId !== userId) {
+        res.status(403).json({ error: 'Forbidden' });
+        return;
+      }
+
+      // Ensure seats is a valid number
+      const body = req.body as { seats: number };
+      if (typeof body.seats !== 'number' || body.seats < 1) {
+        res.status(400).json({ error: 'Invalid input for seats' });
+        return;
+      }
+
+      // Update the parent's seats
+      await prisma.parent.update({
+        where: { personId },
+        data: { seats: body.seats }
+      });
+      res.json({ success: true });
+      return;
+    } catch (err: unknown) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError) {
+        res.status(400).json({ error: err.message });
+        return;
+      }
       next(err);
     }
-  }); */
+  });
 
 export default router;
