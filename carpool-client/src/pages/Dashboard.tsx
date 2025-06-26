@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
 	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
+	const [errorMessage, setErrorMessage] = useState<string>('');
 	const [family, setFamily] = useState<FamilyOutput | null>(null);
 
 	const { getToken } = useAuth();
@@ -30,7 +30,7 @@ export default function Dashboard() {
 
 				setFamily(await res.json());
 			} catch (err: unknown) {
-				setError(err instanceof Error ? err.message : 'Unknown error');
+				setErrorMessage(err instanceof Error ? err.message : 'Unknown error');
 			} finally {
 				setLoading(false);
 			}
@@ -42,7 +42,7 @@ export default function Dashboard() {
 			<h1>Your Dashboard</h1>
 			<p>Coming soon: trip schedules, family overview, and more.</p>
 			<div>
-				{error && <p className="text-red-600">{error}</p>}
+				{errorMessage && <p className="text-red-600">{errorMessage}</p>}
 				{family?.parents.map(p => (
 					<div key={p.id}>
 						<h2>Parent</h2>
@@ -62,7 +62,6 @@ export default function Dashboard() {
 						</p>
 					</div>
 				))}
-				{loading && <p>Loading...</p>}
 			</div>
 			<div>
 				{family?.children.map(c => (
@@ -83,6 +82,7 @@ export default function Dashboard() {
 						</p>
 					</div>
 				))}
+				{loading && <p>Loading...</p>}
 			</div>
 		</div>
 	);
