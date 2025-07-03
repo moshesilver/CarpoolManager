@@ -1,10 +1,6 @@
 import { useFormContext } from 'react-hook-form';
 import type { AddressInput } from '../../types';
 
-export type EditAddressPayload = AddressInput & {
-	sameAsId?: number;
-};
-
 type Props = {
 	members: { id: number; name: string; addressId: number }[];
 	selfId: number;
@@ -15,7 +11,7 @@ export default function EditAddressForm({ members, selfId }: Props) {
 		register,
 		watch,
 		formState: { errors }
-	} = useFormContext<EditAddressPayload>();
+	} = useFormContext<AddressInput>();
 
 	const sameAsId = watch('sameAsId');
 

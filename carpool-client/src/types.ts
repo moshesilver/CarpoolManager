@@ -1,10 +1,3 @@
-export interface AddressInput {
-	street: string;
-	city: string;
-	state: string;
-	zip: string;
-}
-
 export interface AddressOutput {
 	id: number;
 	street: string;
@@ -13,7 +6,7 @@ export interface AddressOutput {
 	zip: string;
 }
 
-interface CopyAddress {
+/* interface CopyAddress {
 	sameAsId: number;
 	street?: never;
 	city?: never;
@@ -29,7 +22,15 @@ interface ManualAddress {
 	zip: string;
 }
 
-export type AddressFormData = CopyAddress | ManualAddress;
+export type AddressInput = CopyAddress | ManualAddress; */
+
+export interface AddressInput {
+	street: string;
+	city: string;
+	state: string;
+	zip: string;
+	sameAsId?: string; // numeric ID of another address to copy
+}
 
 export interface PersonOutput {
 	id: number;
@@ -42,7 +43,6 @@ export interface ParentInput {
 	email: string;
 	phone: string;
 	seats: number;
-	sameAddress?: boolean;
 	address: AddressInput;
 }
 
@@ -58,7 +58,6 @@ export interface ChildInput {
 	name: string;
 	boosterSeat: boolean;
 	frontSeat: boolean;
-	sameAddress?: boolean;
 	address: AddressInput;
 }
 
