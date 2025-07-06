@@ -102,7 +102,7 @@ export default function AddressSubform({
 						const addr = m.address ?? {};
 						const isIncomplete =
 							!addr?.street || !addr?.city || !addr?.state || !addr?.zip;
-						const isChainCopy = addr.sameAsId !== null && addr.sameAsId !== '';
+						const isChainCopy = Boolean(addr.sameAsId);
 
 						const isDisabled = isIncomplete || isChainCopy;
 
