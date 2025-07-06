@@ -75,6 +75,17 @@ export default function EditAddress() {
 		try {
 			if (isNaN(pid)) throw new Error('Invalid personId');
 
+			const changed =
+				data.sameAsId !== '' ||
+				data.street !== initial!.street ||
+				data.city !== initial!.city ||
+				data.state !== initial!.state ||
+				data.zip !== initial!.zip;
+
+			if (!changed) {
+				throw new Error('No changes made to address');
+			}
+
 			const token = await getToken();
 			const res = await fetch(
 				`${import.meta.env.VITE_API_URL}/family/${pid}/address`,
@@ -114,7 +125,7 @@ export default function EditAddress() {
 	return (
 		<FormPage<AddressInput>
 			title="Edit Address"
-			defaultValues={{ ...initial, sameAsId: undefined }}
+			defaultValues={{ ...initial, sameAsId: '' }}
 			onSubmit={handleSubmit}
 			onCancel={() => navigate(-1)}
 			isSubmitting={isSubmitting}

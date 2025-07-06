@@ -22,8 +22,8 @@ export default function EditAddressForm({ members, selfId }: Props) {
 					<input
 						type="radio"
 						value=""
-						{...register('sameAsId', { valueAsNumber: true })}
-						checked
+						{...register('sameAsId' /* , { valueAsNumber: true } */)}
+						/* checked */
 					/>{' '}
 					Edit manually
 				</label>
@@ -68,8 +68,8 @@ export default function EditAddressForm({ members, selfId }: Props) {
 						<label key={m.id} className="block mb-1">
 							<input
 								type="radio"
-								value={m.addressId}
-								{...register('sameAsId', { valueAsNumber: true })}
+								value={String(m.addressId)}
+								{...register('sameAsId' /* , { valueAsNumber: true } */)}
 							/>{' '}
 							{m.name}
 						</label>
