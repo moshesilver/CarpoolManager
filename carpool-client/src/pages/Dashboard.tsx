@@ -3,14 +3,16 @@ import { useEffect, useState } from 'react';
 import type { FamilyOutput } from '../types';
 import { useNavigate } from 'react-router-dom';
 import FormContainer from '../components/FormContainer';
-import EditSeatInput from '../components/forms/EditSeatInput';
+import EditSeats from '../components/forms/EditSeats';
+import EditBoosterSeat from '../components/forms/EditBoosterSeat';
 
 export default function Dashboard() {
 	const [loading, setLoading] = useState(true);
 	const [errorMessage, setErrorMessage] = useState<string>('');
 	const [family, setFamily] = useState<FamilyOutput | null>(null);
-	const [editingSeats, setEditingSeats] = useState(false);
 	const [isSubmitting, setSubmitting] = useState(false);
+	const [editingSeats, setEditingSeats] = useState(false);
+	const [editingBoosterSeat, setEditingBoosterSeat] = useState(false);
 
 	const { getToken } = useAuth();
 	const navigate = useNavigate();
@@ -46,6 +48,14 @@ export default function Dashboard() {
 		setErrorMessage('');
 
 		try {
+			const current = family?.parents.find(p => p.person.id === pid);
+			if (!current) throw new Error('Parent not found');
+
+			if (current?.seats === seats) {
+				// no change - exit early
+				throw new Error('No change in seats');
+			}
+
 			if (seats < 1) {
 				throw new Error('Seats must be at least 1');
 			}
@@ -93,6 +103,57 @@ export default function Dashboard() {
 		}
 	}
 
+	async function handleSubmitBoosterSeat(boosterSeat: boolean, pid: number) {
+		setSubmitting(true);
+		setErrorMessage('');
+
+		try {
+			const current = family?.children.find(c => c.person.id === pid);
+			if (!current) throw new Error('Child not found');
+
+			if (current?.boosterSeat === boosterSeat) {
+				// no change - exit early
+				throw new Error('No change in booster seat status');
+			}
+
+			const token = await getToken();
+			if (!token)
+				throw new Error('You must be logged in to update booster seat');
+
+			const res = await fetch(
+				`${import.meta.env.VITE_API_URL}/family/${pid}/booster-seat`,
+				{
+					method: 'PATCH',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${token}`
+					},
+					body: JSON.stringify({ boosterSeat })
+				}
+			);
+
+			if (!res.ok) {
+				const body = await res.json().catch(() => ({}));
+				throw new Error(body.error ?? `HTTP ${res.status}`);
+			}
+
+			setFamily(f => {
+				if (!f) return f;
+				return {
+					...f,
+					children: f.children.map(c =>
+						c.person.id === pid ? { ...c, boosterSeat } : c
+					)
+				};
+			});
+		} catch (err: unknown) {
+			setErrorMessage(err instanceof Error ? err.message : 'Unknown error');
+		} finally {
+			setSubmitting(false);
+			setEditingBoosterSeat(false);
+		}
+	}
+
 	return (
 		<div>
 			<h1>Your Dashboard</h1>
@@ -124,7 +185,7 @@ export default function Dashboard() {
 								isSubmitting={isSubmitting}
 								errorMessage={errorMessage}
 							>
-								<EditSeatInput />
+								<EditSeats />
 							</FormContainer>
 						)}
 						<p>
@@ -134,7 +195,7 @@ export default function Dashboard() {
 								className="text-blue-500 hover:underline ml-2"
 								onClick={() => navigate(`/edit-address/${p.person.id}`)}
 							>
-								Edit Address
+								Edit
 							</button>
 						</p>
 					</div>
@@ -145,7 +206,32 @@ export default function Dashboard() {
 					<div key={c.id}>
 						<h2>Child</h2>
 						<p>Name: {c.person.name}</p>
-						<p>Booster Seat: {c.boosterSeat ? 'Yes' : 'No'}</p>
+						<p>
+							Booster Seat: {c.boosterSeat ? 'Yes' : 'No'}
+							{!editingBoosterSeat && (
+								<button
+									className="text-blue-500 hover:underline ml-2"
+									onClick={() => {
+										setEditingBoosterSeat(true);
+									}}
+								>
+									Edit
+								</button>
+							)}
+						</p>
+						{editingBoosterSeat && (
+							<FormContainer
+								defaultValues={{ boosterSeat: c.boosterSeat }}
+								onSubmit={({ boosterSeat }) =>
+									handleSubmitBoosterSeat(boosterSeat, c.person.id)
+								}
+								onCancel={() => setEditingBoosterSeat(false)}
+								isSubmitting={isSubmitting}
+								errorMessage={errorMessage}
+							>
+								<EditBoosterSeat />
+							</FormContainer>
+						)}
 						<p>Front Seat: {c.frontSeat ? 'Yes' : 'No'}</p>
 						<p>
 							Address: {c.person.address.street}, {c.person.address.city},{' '}
@@ -154,7 +240,7 @@ export default function Dashboard() {
 								className="text-blue-500 hover:underline ml-2"
 								onClick={() => navigate(`/edit-address/${c.person.id}`)}
 							>
-								Edit Address
+								Edit
 							</button>
 						</p>
 					</div>

@@ -1,6 +1,6 @@
 import { useFormContext } from 'react-hook-form';
 
-export default function EditSeatInput() {
+export default function EditSeats() {
 	const { register } = useFormContext<{ seats: number }>();
 	return (
 		<input
