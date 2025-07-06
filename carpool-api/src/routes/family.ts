@@ -53,7 +53,7 @@ type UpdateAddressBody = SameAsAddress | FullAddress;
 // all family requests are mounted on / instead of /:id to prevent access to families by id
 router
   .route('/')
-  // returns user family
+  // return user family
   .get(async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { userId } = getAuth(req);
@@ -82,7 +82,7 @@ router
       next(err);
     }
   })
-  // creates user family
+  // create user family
   .post(async (req: Request, res: Response, next: NextFunction) => {
     const { userId } = getAuth(req);
     if (!userId) {
@@ -165,7 +165,7 @@ router
 
 router
   .route('/:personId/address')
-  // edits persons address
+  // edit person address
   .patch(async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { userId } = getAuth(req);
@@ -247,7 +247,7 @@ router
 
 router
   .route('/:personId/seats')
-  // edits parents seats
+  // edit parent seats
   .patch(async (req: Request, res: Response, next: NextFunction) => {
     try {
       // Ensure user is authenticated
@@ -291,6 +291,57 @@ router
       await prisma.parent.update({
         where: { personId },
         data: { seats: body.seats }
+      });
+      res.json({ success: true });
+      return;
+    } catch (err: unknown) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError) {
+        res.status(400).json({ error: err.message });
+        return;
+      }
+      next(err);
+    }
+  });
+
+router
+  .route('/:personId/booster-seat')
+  // edit child booster seat;
+  .patch(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // Ensure user is authenticated
+      const { userId } = getAuth(req);
+      if (!userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      // Ensure personId is a number
+      const personId = Number(req.params.personId);
+      if (isNaN(personId)) {
+        res.status(400).json({ error: 'Invalid personId' });
+        return;
+      }
+
+      // Ensure person is a child
+      const person = await prisma.person.findUnique({
+        where: { id: personId },
+        include: {
+          child: { include: { family: true } }
+        }
+      });
+      if (!person || !person.child) {
+        res.status(404).json({ error: 'Child not found' });
+        return;
+      }
+      if (person.child.family.clerkUserId !== userId) {
+        res.status(403).json({ error: 'Forbidden' });
+        return;
+      }
+
+      // Update the child's booster seat
+      await prisma.child.update({
+        where: { personId },
+        data: { boosterSeat: req.body.boosterSeat }
       });
       res.json({ success: true });
       return;
