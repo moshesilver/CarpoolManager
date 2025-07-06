@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import ErrorBanner from '../components/ErrorBanner';
 import FormPage from '../components/FormPage';
 import EditAddressForm from '../components/forms/EditAddressForm';
-import type { AddressFormData, AddressInput, FamilyOutput } from '../types';
+import type { AddressInput, FamilyOutput } from '../types';
 
 type Member = {
 	id: number;
@@ -68,7 +68,7 @@ export default function EditAddress() {
 		})();
 	}, [personId, getToken, pid]);
 
-	const handleSubmit = async (data: AddressFormData) => {
+	const handleSubmit = async (data: AddressInput) => {
 		setSubmitting(true);
 		setErrorMessage('');
 
@@ -112,7 +112,7 @@ export default function EditAddress() {
 	if (!initial) return <p>Loading…</p>;
 
 	return (
-		<FormPage<AddressFormData>
+		<FormPage<AddressInput>
 			title="Edit Address"
 			defaultValues={{ ...initial, sameAsId: undefined }}
 			onSubmit={handleSubmit}
