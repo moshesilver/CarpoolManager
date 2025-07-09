@@ -10,8 +10,7 @@ export default function AppLayout() {
 	];
 	const privateNavLinks = [
 		{ path: '/', label: 'Home' },
-		{ path: '/dashboard', label: 'Dashboard' },
-		{ path: '/create-family', label: 'Create Family' }
+		{ path: '/dashboard', label: 'Dashboard' }
 	];
 	return (
 		<div className="app-layout">
