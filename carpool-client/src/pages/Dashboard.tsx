@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import FormContainer from '../components/FormContainer';
 import EditSeats from '../components/forms/EditSeats';
 import EditBoosterSeat from '../components/forms/EditBoosterSeat';
+import EditFrontSeat from '../components/forms/EditFrontSeat';
 
 export default function Dashboard() {
 	const [loading, setLoading] = useState(true);
@@ -13,6 +14,7 @@ export default function Dashboard() {
 	const [isSubmitting, setSubmitting] = useState(false);
 	const [editingSeats, setEditingSeats] = useState(false);
 	const [editingBoosterSeat, setEditingBoosterSeat] = useState(false);
+	const [editingFrontSeat, setEditingFrontSeat] = useState(false);
 
 	const { getToken } = useAuth();
 	const navigate = useNavigate();
@@ -154,6 +156,56 @@ export default function Dashboard() {
 		}
 	}
 
+	async function handleSubmitFrontSeat(frontSeat: boolean, pid: number) {
+		setSubmitting(true);
+		setErrorMessage('');
+
+		try {
+			const current = family?.children.find(c => c.person.id === pid);
+			if (!current) throw new Error('Child not found');
+
+			if (current?.frontSeat === frontSeat) {
+				// no change - exit early
+				throw new Error('No change in front seat status');
+			}
+
+			const token = await getToken();
+			if (!token) throw new Error('You must be logged in to update front seat');
+
+			const res = await fetch(
+				`${import.meta.env.VITE_API_URL}/family/${pid}/front-seat`,
+				{
+					method: 'PATCH',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${token}`
+					},
+					body: JSON.stringify({ frontSeat })
+				}
+			);
+
+			if (!res.ok) {
+				const body = await res.json().catch(() => ({}));
+				throw new Error(body.error ?? `HTTP ${res.status}`);
+			}
+
+			setFamily(f => {
+				if (!f) return f;
+				return {
+					...f,
+					children: f.children.map(c =>
+						c.person.id === pid ? { ...c, frontSeat } : c
+					)
+				};
+			});
+		} catch (err: unknown) {
+			setErrorMessage(err instanceof Error ? err.message : 'Unknown error');
+		} finally {
+			setSubmitting(false);
+			setEditingFrontSeat(false);
+		}
+	}
+
 	return (
 		<div>
 			<h1>Your Dashboard</h1>
@@ -232,7 +284,32 @@ export default function Dashboard() {
 								<EditBoosterSeat />
 							</FormContainer>
 						)}
-						<p>Front Seat: {c.frontSeat ? 'Yes' : 'No'}</p>
+						<p>
+							Front Seat: {c.frontSeat ? 'Yes' : 'No'}
+							{!editingFrontSeat && (
+								<button
+									className="text-blue-500 hover:underline ml-2"
+									onClick={() => {
+										setEditingFrontSeat(true);
+									}}
+								>
+									Edit
+								</button>
+							)}
+						</p>
+						{editingFrontSeat && (
+							<FormContainer
+								defaultValues={{ frontSeat: c.frontSeat }}
+								onSubmit={({ frontSeat }) =>
+									handleSubmitFrontSeat(frontSeat, c.person.id)
+								}
+								onCancel={() => setEditingFrontSeat(false)}
+								isSubmitting={isSubmitting}
+								errorMessage={errorMessage}
+							>
+								<EditFrontSeat />
+							</FormContainer>
+						)}
 						<p>
 							Address: {c.person.address.street}, {c.person.address.city},{' '}
 							{c.person.address.state} {c.person.address.zip}
