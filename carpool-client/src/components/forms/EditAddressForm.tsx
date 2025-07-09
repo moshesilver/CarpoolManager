@@ -29,28 +29,36 @@ export default function EditAddressForm({ members, selfId }: Props) {
 							placeholder="Street"
 							className="block w-full mb-2"
 						/>
-						{errors.street && <span>{errors.street.message}</span>}
+						{errors.street && (
+							<span className="text-red-500">{errors.street.message}</span>
+						)}
 
 						<input
 							{...register('city', { required: 'City required' })}
 							placeholder="City"
 							className="block w-full mb-2"
 						/>
-						{errors.city && <span>{errors.city.message}</span>}
+						{errors.city && (
+							<span className="text-red-500">{errors.city.message}</span>
+						)}
 
 						<input
 							{...register('state', { required: 'State required' })}
 							placeholder="State"
 							className="block w-full mb-2"
 						/>
-						{errors.state && <span>{errors.state.message}</span>}
+						{errors.state && (
+							<span className="text-red-500">{errors.state.message}</span>
+						)}
 
 						<input
 							{...register('zip', { required: 'ZIP required' })}
 							placeholder="ZIP"
 							className="block w-full"
 						/>
-						{errors.zip && <span>{errors.zip.message}</span>}
+						{errors.zip && (
+							<span className="text-red-500">{errors.zip.message}</span>
+						)}
 					</>
 				)}
 			</div>
