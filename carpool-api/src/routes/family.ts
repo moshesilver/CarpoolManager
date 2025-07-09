@@ -305,7 +305,7 @@ router
 
 router
   .route('/:personId/booster-seat')
-  // edit child booster seat;
+  // edit child booster seat
   .patch(async (req: Request, res: Response, next: NextFunction) => {
     try {
       // Ensure user is authenticated
@@ -342,6 +342,57 @@ router
       await prisma.child.update({
         where: { personId },
         data: { boosterSeat: req.body.boosterSeat }
+      });
+      res.json({ success: true });
+      return;
+    } catch (err: unknown) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError) {
+        res.status(400).json({ error: err.message });
+        return;
+      }
+      next(err);
+    }
+  });
+
+router
+  .route('/:personId/front-seat')
+  // edit child front seat
+  .patch(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // Ensure user is authenticated
+      const { userId } = getAuth(req);
+      if (!userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      // Ensure personId is a number
+      const personId = Number(req.params.personId);
+      if (isNaN(personId)) {
+        res.status(400).json({ error: 'Invalid personId' });
+        return;
+      }
+
+      // Ensure person is a child
+      const person = await prisma.person.findUnique({
+        where: { id: personId },
+        include: {
+          child: { include: { family: true } }
+        }
+      });
+      if (!person || !person.child) {
+        res.status(404).json({ error: 'Child not found' });
+        return;
+      }
+      if (person.child.family.clerkUserId !== userId) {
+        res.status(403).json({ error: 'Forbidden' });
+        return;
+      }
+
+      // Update the child's front seat
+      await prisma.child.update({
+        where: { personId },
+        data: { frontSeat: req.body.frontSeat }
       });
       res.json({ success: true });
       return;
