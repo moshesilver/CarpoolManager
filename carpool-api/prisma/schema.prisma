@@ -75,9 +75,6 @@ model Parent {
 
   // As a driver for a Carpool
   drivingCarpools Carpool[]
-
-  // New relation: Admins of carpool groups
-  adminForGroups CarpoolGroupAdmin[]
 }
 
 model Child {
@@ -112,9 +109,6 @@ model CarpoolGroup {
    */
   id   Int    @id @default(autoincrement())
   name String @unique // Unique name for the carpool group
-
-  // Admins are now managed via CarpoolGroupAdmin
-  admins CarpoolGroupAdmin[] // new relation
 
   // Trip times set by the admin at group creation
   tripTimes TripTime[]
@@ -169,25 +163,6 @@ model Carpool {
 }
 
 // =============================
-// Carpool Group Admin
-// =============================
-
-model CarpoolGroupAdmin {
-  /**
-   * Represents a parent who is an admin for a carpool group
-   * This allows for multiple admins per group and multiple groups per admin
-   */
-  id             Int @id @default(autoincrement())
-  parentId       Int
-  carpoolGroupId Int
-
-  parent       Parent       @relation(fields: [parentId], references: [id])
-  carpoolGroup CarpoolGroup @relation(fields: [carpoolGroupId], references: [id])
-
-  @@unique([parentId, carpoolGroupId])
-}
-
-// =============================
 // Membership Join Tables for CarpoolGroup Registrations
 // =============================
 
@@ -201,6 +176,7 @@ model ParentMembership {
   parent         Parent       @relation(fields: [parentId], references: [id])
   carpoolGroupId Int
   carpoolGroup   CarpoolGroup @relation(fields: [carpoolGroupId], references: [id])
+  isAdmin        Boolean      @default(false) // Whether this parent is an admin of the group
 
   // The trip times (from the group's available options) that the parent selects
   selectedTripTimes TripTime[] @relation("ParentTripTimeAvailability")
