@@ -6,3 +6,4 @@ temp/
 .vscode
 *.db-journal
 printAllFilesAndFolders.js
+notes.txt
